@@ -1,0 +1,142 @@
+---
+title: "Data Visualization Pre-Lecture"
+author: "Dr. Osita Onyejekwe"
+date: "2023-01-30"
+output: html_document
+---
+
+-   **Data**
+-   **Mapping (aesthetics)**
+-   **geometric representation**
+-   statistics
+-   facet
+-   coordinate space
+-   labels
+-   theme
+
+```{r}
+
+#install.packages("tidyverse")
+#install.packages("scales")install.packages("ggplot2", dependencies = TRUE)
+#install.packages("ggplot2", dependencies = TRUE)
+
+#library(tidyverse)
+library(ggplot2)
+
+# type in data() to see the list of available data sets in R. For this lecture we are going to be looking at the BOD (Biochemical Oxygen Demand) data set. 
+
+# type in ?BOD to see the description of this data set. 
+
+
+```
+
+Let's take a look at the data:
+
+# Method 1
+
+```{r}
+#install.packages("colorspace")
+#library(colorspace)
+
+
+code 
+
+```
+
+# Method2
+
+```{r}
+
+code 
+
+
+```
+
+## Carbon Dioxide Uptake in Grass Plants
+
+```{r}
+
+library(tidyverse)
+
+
+
+
+# Becuase we are working in the Tidyverse, we have access to the pipe operator. 
+
+
+# conerntration is the CO2 concerntration in the atmosphere (independent)
+# uptake of C02 (y variable), dependent 
+
+code 
+ 
+# alpha is for transparency  
+# geom_smooth() is a linear model that will map over our geom_point()
+# as things get plotted, I want the color of individaul plots to be a function of which treatment group that particular observation or row was int 
+
+# It's drawn 2 smooth linear models through these 2 groups, the chilled and non-chilled (treatment groups applied to graphs) and around each of them it has drawn the standard error. 
+
+code 
+
+
+# Create a Facet wrap by type. 
+
+code 
+
+code 
+
+
+```
+
+```{r}
+
+code 
+
+code 
+# now let's add in mapping just for the points 
+
+code
+
+# here note that for geom_point(aes(....)) the mapping here only applied to the points. It did not apply to the other layers of this particular graph. 
+
+code 
+
+# let's now flip it on its side. 
+
+code  
+
+# face_wrap(~Type) to get more information out of it. 
+
+```
+
+## In Summary
+
+We've got a number of different attributes being represented here. The type of plant, Quebec/Mississippi, the actual name/designation of the plant (bottom right panel), concentration, uptake, we've got treatment and a lot of attributes all summarized in one graphic.
+
+```{r}
+
+
+#view(mpg)
+
+# we may postulate that the engine size (displ) may translate to better "city" and "hwy" fuel efficienty (miles per gallon) 
+
+code 
+
+# We observe that as engine size grows bigger, fuel efficiency goes down. 
+
+
+code 
+
+# aesthetic where we map color against the drive (4 wheel/front wheel..etc) such that the size of each dot is a function of the transmission type. 
+
+code
+
+code
+
+```
+
+Let's say that we wanted to clean this graph up a little bit by removing some outliars such that the city data is filtered by only observations less than 25.
+
+```{r}
+code
+
+```
