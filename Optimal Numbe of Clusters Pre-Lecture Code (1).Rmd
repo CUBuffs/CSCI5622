@@ -1,0 +1,24 @@
+---
+title: "Optimal Numbe of Clusters Pre-Lecture Code"
+author: "Dr. Osita Onyejekwe"
+date: "2023-02-17"
+output: html_document
+---
+
+---
+title: "Optimal Number of Clusters"
+author: "Dr. Osita Onyejekwe"
+date: "2023-02-17"
+output: html_document
+---
+
+1.  Elbow Method 
+2.  Silhouette Method
+3.  Gap Statistic
+
+
+```{r}
+library(tidyverse)
+library(cluster)
+library(factoextra)
+```

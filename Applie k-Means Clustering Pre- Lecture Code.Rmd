@@ -1,0 +1,153 @@
+---
+title: "Applied K-Means Clustering - Pre- Lecture Code"
+author: "Dr. Osita Onyejekwe"
+date: "2023-02-08"
+output: html_document
+---
+
+# Unsupervised Learning
+
+Unlabeled Data. You would typically have a large data set with no dependent variables. You are essentially trying to determine what type of groups that exist within the data set such that you could potentially perform a classifier algorithm or you could have a more of a direct insight as to what type of variables or what type of relationships there are between the variables.
+
+Typically unsupervised learning can be used in any type of industry, however it is predominantly used in the **genomic area/biology** where we have a genome sequence etc. Another area would be in **genomic sequences**, **medical images**, **image segmentation**, **genetic clustering**, **computer recognition** or **computer vision for image recognition**.
+
+
+- One of the most popular unsupervised learning techniques 
+- Used to group together observations 
+- Using a fixed number of clusters (centroid-center of mass within an n-dimensional object), group together observations based on similarities.
+- Doing this for k-clusters. Then calculate distance between these centroids  
+- the k-means clustering will then merge similarities between the 2 different clusters 
+- Whichever clusters are the same or minimal in distance, then they will be merged together. (**Euclidean Distance!**)
+- If they are not as similar as other clusters then they will not be merged together. 
+- It will then iterate through however many iterations you might have. 
+
+
+# Steps Re-visited 
+
+- Randomly configures k-centroids in the data space. 
+  - Based on these positions, the algorithm will optimize for the best position of the centroids 
+  - Algorithm stops when no change in centroid values occurred. 
+    - Or the number of iterations has been reached. 
+  
+```{r, eval = FALSE}
+
+install.packages("factoextra")
+
+```
+
+```{r}
+library(factoextra) # cluster visualization 
+```
+
+```{r}
+
+iris 
+
+# we will take out the species column and compare the clustering method k-means with our given data (sepal length, width..etc. ) and see if they successfully cluster the corresponding data with the corresponding species. 
+
+```
+
+```{r}
+
+# Iris Labels 
+
+#code here  
+
+# Notice that it is a balanced data set. 
+
+#code here  
+# we see that our data is unlabeled and thus we will compare our unlabeled and see how well it does with the above labels! 
+
+```
+
+## Scale the Data 
+    
+```{r}
+# Step #1  (data scaling because the distance metrics should be relatively unweighted and scaling our data down would yield more of a balanced data set since we will be using Euclidean distance and its default).
+
+#code here  
+# all data now scaled for all 150 observations 
+
+```
+    
+## Calculate the Distance Metrics    
+    
+```{r}
+# now we want to calculate the distance metrics between our observations. 
+
+# distance (build in package)
+
+#code here  
+
+#code here  
+# note that this distance function over for the built in package 'factoextra' , that is essentially the distance metric (euclidean distance) and it will look like 
+
+#code here  
+
+# note that the euclidean distance on this particular data set is the first 2-7 rows. 
+```
+
+## Determine the Number of Needed Clusters 
+
+```{r}
+
+# calculate how many clusters you need (elbow plot)
+# within sum of squares
+
+#code here  
+
+# We already know that for this problem there are 3 types of clusters/features/groups that we want to cluster this to. 
+
+# look at diminishing return. (3,4,5) -> let's use 3 for now 
+```
+
+## Perform K-Means 
+
+
+```{r}
+
+# K-means 
+
+#code here  
+# Clustering Vector: Provides us with the type of clustering group that each of our observation are a part of. 
+
+# Is provides us with a SS and TSS  (76.7%) 
+#  - 76.7% classification or identification of an observation with a group - it's ok..could be better. 
+
+```
+
+## Visualize the Clustering Algorithm Results 
+
+```{r}
+
+#code here  
+# rownames to identify which observation lies in the graph. 
+
+# we want each of the rownames to be unique and no identical rownames and that is why we perform the append of the sequential numbers. 
+#code here  
+
+```
+
+
+```{r}
+#library(factoextra)
+#code here  
+```
+
+We can look at which groups have been identified and which typse o observations have been correctly identified. 
+
+```{r}
+
+#code here  ```
+
+All Setosas look good and some errors/miss-classifications present. 
+
+One could also put the cluster identifier as part of the original data set and apply various supervised learning classifiers and determine whether or not these specific observations live in these current factors we have such as sertosa, virginica and versicolor. 
+
+
+
+
+
+
+
+

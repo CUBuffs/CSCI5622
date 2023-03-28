@@ -1,0 +1,130 @@
+---
+title: "ARM - Apriori Algorithm - Pre - Lecture Codes"
+author: "Dr. Osita Onyejekwe"
+date: ' `r Sys.Date()`'
+output: html_document
+---
+
+# ARM - Apriori Algorithm Explained with Coding
+
+```{r}
+#install.packages("arules")
+#install.packages("arulesViz")
+library(arules)
+library(arulesViz)
+```
+
+We are now going to observe transactions in the form of an item matrix with 9835 rows and 169 columns. In other words there are 9835 different transactions and orders, and 169 different items.
+
+```{r}
+# code here 
+```
+
+
+```{r}
+# code here 
+```
+
+We will then go ahead and find interesting relationships between these **169** different items and to do that we will have to go and load the **apriori** algorithm. Note that *support* basically tells us how significant is the entire scheme of things.
+
+## English Lesson
+
+The prefix *"ante-"* always means *"before"* or *"prior to"* (as opposed to "anti-" which means "against"), so an **antecedent** is something that occurs before or **prior** to something else.
+
+While *"antecedent"* can be either a noun (a word that names something) or an adjective, "consequent" can only be an adjective; "consequence" is the corresponding noun. Those words have the same root word as the word *"sequel"*, which is something that comes AFTER something else.
+
+However, *"consequent"* and *"consequence"* have an additional connotation. The prefix "con-" always means "with". A consequence is an event or condition that follows and is CAUSED BY something that came before.
+
+## Lift Value Explained
+
+![](Lift%20Value%20Explained.png)
+
+```{r}
+# code here 
+```
+
+This value of 0.002 means that **0.2% of all the orders** have the *consequent* and *antecedent*. The confidence value of 0.5 means that out of all the antecedents, there needs to be at least 50% of them which would also have the consequent.
+
+Let's now inspect this and have a glance of the first 5 rules.
+
+```{r}
+# code here 
+```
+
+We have the first 5 rules, along with the support, confidence and lift value. we see that if a person buys cereals, they are more likely to buy whole milk. If they buy jam, they are more likely to buy whole milk, specialty cheese -\> other vegetables, rice -\> other vegetables and rice the consequent is whole milk..etc..Therefore here we observe antecedents (lhs) and consequent (rhs). We then observe the support, confidence, coverage, life and count values.
+
+Now notice that the support value of `0.003660397` means that 0.3% of all the orders represent this LHS and RHS combination, and the associated confidence value of `64%` means that of the orders which contains `cereals` , `64%` of them are likely to have `whole milk`.
+
+The **lift** value basically tells us how significant is the consequent with respect to the antecedent. Basically telling us that all of these values are 2 times more significant. Let us now sort them on the basis of **lift**.
+
+```{r}
+#code here 
+
+```
+
+If a person buys Butter, Hard Cheese, they are very likely to buy whipped/sour cream..etc. The support value of 0.002 means that 0.2 percent of all the orders represent represent this LHS/RHS combination and thus the confidence value of 0.512 means that of all the orders that contain Butter-Hard Cheese 51.2% of them definitely contain the whipped/sour cream.
+
+## Plotting These Rules
+
+```{r}
+# code here 
+```
+
+On the Y-axis we have confidence and the support is on the x-xis. The heat map is for the lift. Notice that the darker red dots are mostly occurring at low support values. Thus the lift values of 7x, 6x and 5x are mostly prevalent when when the rule itself is somewhat of an insignificant rule in the overall scheme of things.
+
+## Different type of plot
+
+Note that the size of the bubble represents the support and the color of the bubble represents the lift.
+
+```{r}
+# code here 
+
+```
+
+Notice that the larger the bubble the greater the support and the darker the bubble, the greater the lift. So for example given the antecedent {rice beef and 7 more items}, the consequent is root vegetable. It has a moderate compromise between support and lift. 
+
+Let's now change the parameters to obtain another set of rules. 
+
+```{r}
+# code here 
+```
+
+The minimum length for all these is 5 and the empty set is also counted as one item. (4 plus empty set makes it 5). 
+
+```{r}
+# code here 
+```
+
+## Building another rule
+
+```{r}
+
+# code here 
+
+# 0.7% of all the orders have both the antecedent and the consequent. Out of all the antecedents, 60% of all them also have the consequent 
+
+# code here 
+```
+
+```{r}
+# code here 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
