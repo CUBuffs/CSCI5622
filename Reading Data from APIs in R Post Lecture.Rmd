@@ -1,0 +1,252 @@
+---
+title: "Reading Data from APIs in R"
+author: "Dr. Osita Onyejekwe"
+date: "2023-01-24 - Lecture 3 Day 3"
+output: html_document
+---
+
+Creating a `Shiny Dashabord` based on an API in R.
+
+# APIs
+
+## Definition and Simulations:
+
+### Application Programming Interfaces (APIs)- a defined method for asking for information from a computer:
+
+-   Useful for getting data
+-   Useful for allowing others to run your model without a GUI (graphical user interface like Shiny)
+-   Important for grabbing data from sources and putting your work into practice!
+-   Set of subroutine definitions, communication protocols, and tools for building software
+-   Basically a protocol for computers to talk to one another
+-   Just need to understand the language!
+-   Usually need to get a key (sometimes a username and password)
+-   Also useful for just requesting data instead of downloading files, importing into R and doing cleaning :)
+
+# Let's look at the following Shiny Web-App built in R.
+
+*Shiny (Chang et al. 2021) is a web application framework for R that enables to build interactive web applications. Shiny apps are useful to communicate information as interactive data explorations instead of static documents.*
+
+[Comparing Vehicle Emissions](https://alt-f11.shinyapps.io/Vehicle_Emissions) Author: *Kirby White*
+
+It's purpose is to compare the vehicle emissions for two different vehicles. (My Example)
+
+Note that these drop down lists are populated with APIs such that when I change the *year*, it affected which vehicle manufacturer showed up in the list, and when I selected the *manufacturer* it changed the list of *models* that showed up so that only the vehicle in the list were relevant to the manufacturer. Then save the vehicle as **Vehicle A**, It then takes the information about Vehicle A, such as *year*, *make*, *model* and *trim* information and then asked the **United States Environmental Protection Agency** about that vehicle and stored it in a data frame that is displayed here.
+
+Looking at this data frame, one can observe that the app looked up a specific **EPA ID** and used that EPA ID in an API to ask for all of this other information. This is an example of what you can do with an API and integrate it into an R shiny app or other data analytics and data science work.
+
+The API this app used came from [Fuel Economoy](https://www.fueleconomy.gov/). This website has been set up by the United States Government. It's purpose is to make their data available to it's users through an API interface.
+
+Very often when you're working with an API, there will be documentation on how to make an API request/structure the URL to request data from the server and also how to request what type of information you get back in response to the API call.
+
+Step#1
+
+-   [Let's begin by looking at an API call by going to web-services](https://www.fueleconomy.gov/feg/ws/)
+-   The **Basic Data Services** are to look up a specific vehicle ID number and you'll get the records for that vehicle.
+-   Or you can look up the fuel prices that are currently used
+-   You can get a summary of MPG data...etc
+
+Clicking on one of the [fuel prices](https://www.fueleconomy.gov/ws/rest/fuelprices) will give you a URL. (*ws* stands for *web-services* and *rest* is a type of API and then *fuel prices* is the request that we made. So an API ultimately is just navigating/opening a URL and this is the data set that was returned in response to the API request/aka API call.
+
+![API Call](API%20call.png)
+
+**Let's now figure out how to access this data in R**
+
+# API Requests in R
+
+```{r}
+install.packages("httr")
+install.packages("jsonlite")
+
+```
+
+# Example 1 : Fuel Prices
+
+## Build URLS
+
+Note that an API call is essentially just a URL and usually there's a base URL, i.e., something that every API request is going to involve.
+
+```{r}
+
+base_url <- "www.fueleconomy.gov/ws/rest/"
+
+# That portion of the URL is going to involve everything that we do from this API.
+
+# Then we add an additional portion to that URL , which is just 'fuel prices' 
+
+info_url <- "fuelprices"
+
+# We are putting this into two parts right now because later on, as we get to move advanced parts of an API, you want to be combining different pieces of texts together create the URL.  
+
+full_url <- base::paste0(base_url, info_url)
+
+#We will now join the two URLs together
+
+full_url
+
+# now if we try to navigate to this website, we would get a data-set back in response, however we don't need to use our browser for this, we can just do it in R. 
+
+```
+
+The `HTTR` package has a function called `GET` such that if we give the `GET` function the full URL, it will try and navigate to that website and store the Response in an R object called `api_call`.
+
+```{r}
+api_call <- httr::GET(full_url)
+
+```
+
+Double clicking on `api_call` one would observe that it is a `list` and you should be familiar with `lists` to use APIs in R. Therefore a `list` is essentially several objects of data in the same place. It has multiple components to it such as the `url` we just called and the `status_code` which is very important. We will cover it in a moment, as well as other information we don't really care about.
+
+Our goal here is to take this object, and to convert it into something that is usable. First thing is to observe the `status_code`. In every API, if you make a request, it returns a response. By convention, the `status_code` of 200, means that it was a successful response. That is, the server that received the API call knew what you were asking for, was able to find the data and sent it back to your successfully. If you don't have a status code of 200, something has gone wrong and you might have to adjust your API URL.
+
+## API response
+
+```{r}
+api_call$status_code
+
+api_call$content
+```
+
+Let's now look at `content`. Right now it's not readable, but it is hexadecimal formatting (relating to or using a system of numerical notation that has 16 rather than 10 as its base.) for raw bytes of information. In essence, this is the data that we are looking for, but it's not readable for us just jet.
+
+## Convert response to usable data
+
+```{r}
+api_char <- base::rawToChar(api_call$content)
+
+# In the base package of R (not tidyverse), there is a function called rawtwocharacter. What we want to do is pass a piece of the API response, the content element, into that function and store it into something called api_char and taking a look at that, it looks almost readable, but still not usable. Notice that its still really similar to what we see on the web-page in the example URL. (XML formatting, also JSON)
+
+```
+
+What we can use is the function from the `Jsonlite` package called `fromJSON` and what we're going to do is pass this API character object into it. We're going to use the `Flatten` argument to let it know that if it finds a data frame, to convert that information into a data frame. (In a nested data frame, one or more of the columns consist of another data frame. These structures frequently appear when parsing JSON data from the web. We can flatten such data frames into a regular 2 dimensional tabular structure)
+
+```{r}
+
+api_JSON <- jsonlite::fromJSON(api_char, flatten = TRUE)
+
+api_JSON
+
+```
+
+We run that line of code and we can see that now we have an object that we can make references to in R. Example, let's say I want to retrieve the diesel fuel prices.
+
+```{r}
+api_JSON$diesel
+
+```
+
+At this point you should be famliar enough in R to know how to take this and to continue using this in your line of work. You can convert to this numeric data..etc..etc.
+
+# Example 2: Vehicle Information
+
+## Build URLS
+
+(go ahead and clear out your environment at the top right corner.)
+
+```{r}
+
+base_url <- "www.fueleconomy.gov/ws/rest/"
+
+# I'm going to cause there to be a problem this time :) (add in an extra /rest)
+
+info_url <- "rest/vehicle/menu/options?year=2012&make=Honda&model=Fit"
+
+full_url <- base::paste0(base_url, info_url)
+
+full_url
+
+```
+
+We're going to make the API call and I'm going to show you why it's important to check the response.
+
+## Call API
+
+```{r}
+
+api_call <- httr::GET(full_url)
+
+
+```
+
+## Check Response
+
+```{r}
+
+api_call$status_code
+
+```
+
+It's not 200! This is a problematic status code and this means that something has gone wrong with our API and I probably am not going to be able to convert it to a format that I want and is usabel. Therefre going back into our parameters, i.e, information we put in our URL shows that we have a redunancy so let's fix it.
+
+```{r}
+
+base_url <- "www.fueleconomy.gov/ws/rest/"
+
+# I'm going to cause there to be a problem this time :) (add in an extra /rest)
+
+info_url <- "vehicle/menu/options?year=2012&make=Honda&model=Fit"
+
+full_url <- base::paste0(base_url, info_url)
+
+full_url
+
+```
+
+## Call API
+
+```{r}
+
+api_call <- httr::GET(full_url)
+
+
+```
+
+## Check Response
+
+```{r}
+
+api_call$status_code
+
+```
+
+This was a successful response from the API.
+
+Let's take one more look at the `content` element of the API
+
+```{r}
+
+api_call$content
+
+```
+
+We see that it is still the raw hexadecimal bytes information that we can't use and so we want to convert it to something that is usable by putting int into API character again.
+
+```{r}
+api_char <- base::rawToChar(api_call$content)
+
+api_JSON <- jsonlite::fromJSON(api_char, flatten = TRUE)
+
+api_JSON  # Taking a look at this just one moe time before storing it into a data frame
+
+```
+
+We can see that the list `api_JSON` has only one element in it and it's called `menuItem`, and so if I were to open up the list and select an element of the list, `menuItem` and run that we can see that there is a data frame embedded into the list.
+
+```{r}
+
+api_JSON$menuItem
+
+```
+
+At this point it's very simple to extract that `data frame` and store it as a `data frame` object `df` (data frame) by simply referring to that menu item element of the list.
+
+```{r}
+df <- api_JSON$menuItem
+df
+
+```
+
+Now we have `df` as a `data frame` that we can work with like anything else we have used in R. Note that the second URL is very different than the one we used in example one. You will have to read the documentation for the API that you are using to understand how to build the right URL for you. It is not uncommon for APIs to require an authorization token and for you to register an account with the API so that they know whose making requests and how often. This is for them to monitor their own costs as they are delivering data over the internet. Fortunately for this lecture, the APIs do not require an authorization token :)
+
+For more reading on [APIs in Python](https://gatesboltonanalytics.com/?page_id=254)
+
+For more reading on [APIs in R](https://gatesboltonanalytics.com/?page_id=254)

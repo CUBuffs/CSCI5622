@@ -1,0 +1,366 @@
+---
+title: "Web Scraping and Data Cleaning"
+author: "Dr. Osita Onyejekwe"
+date: "2023-01-27"
+output: html_document
+---
+
+# Web Scraping NFL Data Using R - Statistics pertaining to Tom Brady (NFL Quarterback)
+
+We will be working primarily with the [pro-reference football website](https://www.pro-football-reference.com/players/B/BradTo00.htm)
+
+Contains a data table about his *regular season* and another data table with *playoff* information.
+
+This lecture is going to demonstrate how web-scraping can be problematic and going through loop holes to get some clean data scraped. We will be using the package `rvest`, which is a package that will be able to parse the HTML content and be able to scrape the data from those HTML elements, also works really well in extracting HTML tables.
+
+Will not be doing the data visualization for this lecture. That will be for Monday.
+
+```{r}
+install.packages("rvest") #allows us to parse HTML content and extract the HTML elements from it. 
+install.packages("xml2")
+
+```
+
+```{r}
+library(tidyverse) # data cleaning. manipulation and visualization 
+library(xml2)
+url <- 'https://www.pro-football-reference.com/players/B/BradTo00/gamelog'
+
+# Load in the HTML content of it 
+
+page = url %>% read_html() # takes the URL and parses the HTML content. 
+
+page # if you look at the page object you observe that it has HTML inside of it so now we can do things like extract elements, tables..texts...etc. 
+
+# The website has the regular seasons table and the play-offs table. 
+
+```
+
+How do we identify a table? By using the `inspect` function on the actual page. (Right-click on table and scroll down to inspect.) You can click on any element on the table and you want to get to where the is a `table` tag. **Don't forget to click the small arrow to the top left to be able to inspect any element in the table.**
+
+![Table Tag](table%20tag.png)
+
+Once you get to the table Tag, you can use the `css selector` which can be identified by the ID preceded by the \# sign or **right click** and scroll down to **copy selector.** If you hit paste you get `#stats`. So now we will need that to get the table.
+
+```{r}
+library(rvest)
+
+# get stats regular reason table 
+
+stats = page %>%  html_element(css = '#stats') %>%   
+         html_table()
+stats
+
+# page table is our HTML object, then we're going to pass in the html element function and we are going to use the CSS parameter and set it equal to our CSS selector for the table. Last but not least we will pass in the HTML table function which will basically scrape the HTML table from the HTML content and it will return a nicely formatted table 
+```
+
+As you can see when we run that portion of the code we can see that things have been loaded pretty neatly. Let's do the same for the `playoff` table where we can observe that the `id=stats_playoffs` s we can assume that the `css selector` is going to be \#`stats_playoffs` #stats_playoffs
+
+```{r}
+
+# get stats playoffs table 
+
+stats_playoffs <- page %>%  html_element(css = '#stats_playoffs') %>%   
+         html_table()
+
+stats_playoffs
+
+```
+
+Above we see that we have another stats playoffs with another table. Let's go ahead now and see if these tables are the same by looking at the number of columns for each table.
+
+```{r}
+
+ncol(stats)
+
+ncol(stats_playoffs)
+
+# We see that they are different. Later on in this lecture we will see how we are going to deal with that. 
+
+```
+
+# Data Cleaning
+
+For the stats table one of the biggest problems we see is that the headers are missing and some partial headers at the top and it seems like all of the headers are on the first row.
+
+looking back on the original table, from the website, for regular reason we can see that the "Passing, Rushing, Receiving, and Scoring" are like a header and the other headers are like sub-headers, which include all the sub-elements of the headers. For example one of yards is yards gained by passing and the other is yards lost due to sacks. The heading and sub-headings therefore get a little complicated when we want to deal with this.
+
+If we were just to set the column names equal to the first row then what would happen is that its going to result in multiple instances of yards being mentioned, because we have passing yards, then another passing yards, and then we have rushing yards..etc. so we need to differentiate between.
+
+One way we can deal with that is to combine the column headers and the first rows together to create a type of unique column names.
+
+## Steps
+
+-   Step #1: Change the name of the columns and paste.
+-   Step #2: Paste by taking in the column names of the stats and concatenate (link (things) together in a chain or series.) it with the first row.
+-   Step #3: Separate it using an underscore.
+-   Step #4: Remove all the instances where it starts with an underscore.
+
+```{r}
+colnames(stats) <- paste(colnames(stats), stats[1,], sep = '_') 
+
+# column 12 now becomes passing_cmp (because we're starting with the column names and we're pasting the first row) and the second one will be passing_att. This will thus create some type of unique columns and create differentiation between the columns which is very important
+
+# We still have the columns that start with the underscore we we would like to remove them. 
+
+colnames(stats) <- str_remove_all(colnames(stats), "^[_]")
+
+```
+
+Looking through the `stats` data you notice that the first row is redundant, but also notice that since all the seasons are stacked together, whenever the data for the season is, you're going to see a new header and then you're going to see the data so its kind of annoying. Notice that in the `Date` column, whenever there is text/alphabets, we can remove those rows entirely because those are the rows that we do not need!
+
+Do this by using the `grepl` function by detecting where it starts with a bunch of characters which include an `A-z` and also has a bunch of other characters as well and we want to says: `stats$Date`. The `grepl` will detect for this pattern in the stats-Date column.
+
+```{r}
+
+# Remove unecessary rows by removing the characters
+
+stats <- stats[!grepl('^.*[A-z].*', stats$Date),]
+
+# Before executing, run this line first in console: grepl('^.*[A-z].*', stats$Date)
+
+# Notice the T/F returns. if it's true, that means that that for that specific cell, it means for that specific row, it does include text in that row. Good way in detecting string patterns. 
+
+# The exclamation mark means do the opposite, so in this case we are trying to exclude the ones with the matching pattern and we put the comma at the end because we are trying to get the rows (I know someone is going to ask that :) haha! ). 
+
+# If we do the stuff after the comma then that means that we are referring to the columns but in this case, we are referring to the rows. 
+
+```
+
+## Summary of the Syntax above.
+
+Take the `stats` data and remove any rows that contain alphabets in the date column of states.
+
+#### Removing Empty Columns
+
+```{r}
+
+# remove empty columns without a header 
+
+stats <- stats[, !grepl('^$', colnames(stats))]
+
+# '^$' this indicates an empty string such that '^' indicates the start of the string 
+
+# It's going to take the stats data and remove any of the columns that have an empty heading, since '^$' this is the empty string and its checking for the empty string within the column names of the stats table. 
+
+```
+
+Another problem with our data is that we have 2 passing yards columns and this is a problem because we can't have two columns of the same name due to confusion. We can write a simple `if` statement to see if the column is duplicated and if it is, add the number `2` at the end of the other column header so that we can create some type of differentiation.
+
+```{r}
+
+# check fo the duplicate columns 
+
+dup_index <- grep(TRUE, duplicated(colnames(stats)))
+
+#This will check and return all of the column names that satisfy this condition. SO return to me all the duplicated column or they display as true. 
+
+#run this line of code first! duplicated(colnames(stats))
+
+# running that line of code first you will notice that column 19 returns as true so that means that it was duplicated 
+
+```
+
+```{r}
+# change to different name 
+colnames(stats)[dup_index] = paste(colnames(stats)[dup_index], '2', sep='_')
+
+```
+
+-   When Tom Brady first started off there were a lot of games in which he did not play in. Therefore there are a plethora of `inactive` values.
+
+-   Primary in the `GS` column which means `games started` .
+
+-   If it's empty it means that he *played* but he *did not start the game*. If there is an **astrix** that means that he did start the game.
+
+-   `injured reserve` means that he did not play the game.
+
+-   There was an instance where he was `suspended` for 4 games back in 2016.
+
+```{r}
+
+# replace the GS values 
+
+stats$GS <- stats$GS %>% 
+            str_replace_all('[*]', 'Started') %>% 
+            str_replace_all('^$', 'Played bu not started')
+```
+
+So now we want to take all of the columns after the `GS` column and if it shows text in it, just go ahead and replace it with `NAs` if player has not played.
+
+```{r}
+
+# replace all columns after GS with NAs if player has not played. 
+
+# The grep function is going to return the index for us by providing it with a pattern and our pattern here is that it starts with a GS and here $. 
+
+GS_index <- grep('^GS$',  colnames(stats)) # should be 10
+GS_index <- GS_index + 1
+
+# we want to create a simple loop that will loop through all the values after GS and change all the values that have text that after GS = 0 
+
+for (i in GS_index:ncol(stats)) {
+  stats[[i]][stats[[i]] %in% unique(stats$GS)] <- NA
+}
+
+# So the first value is going to be an 11, so its going to stay for examples (i=11)
+# now go in console and also type in stats(11). It's going to pull all the values from column 11 (passing_ccmp) (this is the first stats[[11]]] command in the equation block above), 
+
+#then for the second stats[ii], its going to say "within this column" , give me the values that are in the stats$GS column, so for column 11, return to me the values that are present in the GS. 
+
+#We did unique GS because we don't want all the values we wants the unique instances. so type in unique(stats$GS)  in the column it will return "inactive..did not play...injured..etc... 
+
+#So, if it includes any of these from above, change them to an NA. The reason why we want to do that is that in the instances that he does play, it only includes numbers so those are the values that we want to keep and the texts, we want to replace it with an NA. 
+
+# In Summary the code above is saying, its taking that column stats[[i]], and then within that column, return to me all the values column that specify column that are in the stats$GS column and set that equal to NA. 
+
+```
+
+We want to apply this same thing to the other data set. , so let's enclose all of that into a `FUNCTION`(From the start of Data Cleaning) to the end. In the end I do want it to return the data set itself because I'm going to set that to an object.
+
+### All coded above in one single Single and put into a Function.
+
+```{r}
+
+data_cleaning <- function(stats) {
+colnames(stats) <- paste(colnames(stats), stats[1,], sep = '_') 
+
+colnames(stats) <- str_remove_all(colnames(stats), "^[_]")
+
+stats <- stats[!grepl('^.*[A-z].*', stats$Date),]
+
+stats <- stats[, !grepl('^$', colnames(stats))]
+
+dup_index <- grep(TRUE, duplicated(colnames(stats)))
+
+colnames(stats)[dup_index] = paste(colnames(stats)[dup_index], '2', sep='_')
+
+
+stats$GS <- stats$GS %>% 
+            str_replace_all('[*]', 'Started') %>% 
+            str_replace_all('^$', 'Played bu not started')
+
+GS_index <- grep('^GS$',  colnames(stats)) 
+GS_index <- GS_index + 1
+
+for (i in GS_index:ncol(stats)) {
+  stats[[i]][stats[[i]] %in% unique(stats$GS)] <- NA
+}
+return(stats)  # return the data set itself 
+}
+```
+
+After enclosing the above code into a `FUNCTION` run the `stats` and the `stats playoffs` again. The data set should get back to how it was before.
+
+```{r}
+stats_regular <- data_cleaning(stats)
+stats_playoffs <- data_cleaning(stats_playoffs)
+
+```
+
+They are both now cleaned up. Now let's solve the Problem of them having a different number of columns. How are we going to bind the data sets if they have a different number of columns?
+
+ncol(stats_regular) = 64 & ncol(stats_playoffs) = 51
+
+### Solution
+
+Create a list containing all the column names from the `stats_regular` table and all the column names from the `stats_playoffs` table and creating a unique list such that we're only going to contain the unique values.
+
+```{r}
+# combine all column names 
+
+all_column_names <- c(colnames(stats_regular), colnames(stats_playoffs)) %>% unique()
+all_column_names
+
+```
+
+The logic behind doing this is that we want to take in all the column names here and we want to find the names that are not present in the stats_playoffs header because the stats_playoffs header has 13 less columns and we want to know what those columns are.
+
+Usually when checking for what's in a list, we use the `%in%` function. The oppoiste of this is going to be the `negave function`, so we want to create our own little function called `not-in`, i.e `%notin%`.
+
+```{r}
+
+`%notin%` <- Negate(`%in%`) # the negate function nullifies whatever you pass in the parenthesis. 
+
+#i.e, now it says give me the stuff that's not in the list. 
+
+```
+
+```{r}
+
+# find the columns that are not in the Stats_playoffs dataset. 
+
+not_in_headers <- all_column_names %notin% colnames(stats_playoffs)
+
+# look through the all columns list and find the ones that are not in the column names of the stats playoffs data set. 
+
+not_in_headers
+
+# it's going to print out a bunch of T/F statements, meaning the values of True are the the specific columns not in the data set. 
+```
+
+```{r}
+all_column_names[28] # you won't find this column in stats_playoffs 
+```
+
+```{r}
+
+# The logic behind this is that if they are missing, we want to create those columns in that data set but we want to set the values to zero because there's no data in them. 
+
+
+# find the missing columns and create them in the stats_playoffs data. 
+
+missing_cols <- all_column_names[not_in_headers]
+missing_cols
+
+# returns  all the values in the all column_names vector that have TRUE for not in headers. 
+
+
+```
+
+Now we want to create those columns and set them equal to zero.
+
+```{r}
+
+stats_playoffs[, missing_cols] <- 0
+
+# it's going to go into the stats_playoffs data set and create columns and its going to initate those values to zero. 
+
+
+```
+
+We can finally bind our data sets to create a master set! But we also need to order the data because it is NOT in the same order.
+
+```{r}
+
+# order the data sets based on a vector 
+
+stats_regular = stats_regular[all_column_names]
+stats_playoffs  = stats_playoffs[all_column_names]
+
+```
+
+```{r}
+stats_combined <- rbind(stats_regular, stats_playoffs)
+stats_combined
+```
+
+They are combined, but now we want to group them by `year`
+
+```{r}
+
+# arrange the data based on year 
+
+stats_combined <- arrange(stats_combined, Year)
+
+```
+
+Write our data set to a file
+
+```{r}
+
+write.csv(stats_combined, 'Scraped Tom Brady Stats.csv', na = '', row.names = F)
+
+# should now find the file in your working directory 
+
+```
